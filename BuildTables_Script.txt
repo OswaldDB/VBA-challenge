@@ -1,0 +1,103 @@
+Sub BuildTables()
+
+'Declare variables to be used in the first table
+Dim TickerCode As String
+Dim OpenNum, CloseNum, StockVolume, SummaryRow, NewTickOpen As Double
+Dim EntriesNum As Long
+    
+'Declare variables to be used in the second table
+Dim IncrTick, DecrTick, GreatTick As String
+Dim IncrVal, DecrVal, GreatVal As Double
+
+'Cycle through each sheet
+For k = 1 To Sheets.Count
+    Worksheets(k).Select
+    
+'BUILD FIRST TABLE!!!
+            
+    'Set the summary row
+    SummaryRow = 2
+        
+    'Set starting stock volume
+    TotalStockVolume = 0
+        
+    'Place the headings for the new range of cells
+    Range("I1").Value = "Ticker"
+    Range("J1").Value = "Yearly Change"
+    Range("K1").Value = "Percent Change"
+    Range("L1").Value = "Total Stock Volume"
+    
+    'Find the row of the last record
+    EntriesNum = Cells(Rows.Count, 1).End(xlUp).Row
+    
+    'Run through each entry
+    For i = 2 To EntriesNum
+        TickerCode = Cells(i, 1).Value
+        OpenNum = Cells(i, 3).Value
+        CloseNum = Cells(i, 6).Value
+        TotalStockVolume = TotalStockVolume + Cells(i, 7).Value
+        If TickerCode <> Cells(i - 1, 1).Value Then
+            Range("I" & SummaryRow).Value = TickerCode
+            NewTickOpen = OpenNum
+        ElseIf TickerCode <> Cells(i + 1, 1).Value Then
+            Range("J" & SummaryRow).Value = CloseNum - NewTickOpen
+            If CloseNum >= NewTickOpen Then
+                Range("J" & SummaryRow).Interior.ColorIndex = 4
+            Else
+                Range("J" & SummaryRow).Interior.ColorIndex = 3
+            End If
+            If NewTickOpen = 0 Then
+                Range("K" & SummaryRow).Value = ""
+            Else
+                Range("K" & SummaryRow).Value = CloseNum / NewTickOpen - 1
+                Range("K" & SummaryRow).NumberFormat = "0.00%"
+            End If
+            Range("L" & SummaryRow).Value = TotalStockVolume
+            TotalStockVolume = 0
+            SummaryRow = SummaryRow + 1
+        End If
+    Next i
+
+'BUILD SECOND TABLE!!!
+    
+    'Set initial values
+    IncrTick = Range("I2").Value
+    DecrTick = Range("I2").Value
+    GreatTick = Range("I2").Value
+    IncrVal = Range("K2").Value
+    DecrVal = Range("K2").Value
+    GreatVal = Range("L2").Value
+    
+    'Find real values
+    For i = 3 To Cells(Rows.Count, 9).End(xlUp).Row
+        If Range("K" & i) < DecrVal Then
+            DecrVal = Range("K" & i)
+            DecrTick = Range("I" & i)
+        ElseIf Range("K" & i) > IncrVal Then
+            IncrVal = Range("K" & i)
+            IncrTick = Range("I" & i)
+        End If
+        If Range("L" & i).Value > GreatVal Then
+            GreatVal = Range("L" & i).Value
+            GreatTick = Range("I" & i).Value
+        End If
+    Next i
+    
+    'Display values
+    Range("P1").Value = "Ticker"
+    Range("Q1").Value = "Value"
+    Range("O2").Value = "Greatest % Increase"
+    Range("O3").Value = "Greatest % Decrease"
+    Range("O4").Value = "Greatest Total Volume"
+    Range("P2").Value = IncrTick
+    Range("P3").Value = DecrTick
+    Range("P4").Value = GreatTick
+    Range("Q2").Value = IncrVal
+    Range("Q3").Value = DecrVal
+    Range("Q4").Value = GreatVal
+    Range("Q2:Q3").NumberFormat = "0.00%"
+
+Next k
+    
+End Sub
+
